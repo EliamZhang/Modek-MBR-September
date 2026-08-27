@@ -12,14 +12,126 @@
 4. **走向哪里**：数据 → 能力 → 模型 → 决策 → 业务应用的完整闭环，投放、运营、风控、定价共用一套分层标准。
 
 ```mermaid
-flowchart LR
-    A[经营约束<br/>获客贵 · 转化长 · 监管严] --> B[量化分层经营<br/>风险 × 价值 × 意愿]
-    B --> C[模型能力<br/>风险 · 价值 · 意愿]
-    C --> D[业务决策<br/>投放 · 运营 · 风控 · 定价]
-    E[银行流水底座<br/>BS-CAT 分类 + S-CALC 测算] --> C
-    F[知识库 + AI Agent<br/>质量与运维] -.-> E
-    F -.-> C
+flowchart TB
+    subgraph L1["① 经营目标与结构性约束"]
+        direction LR
+        S1["经营目标<br/>放款规模达成｜NON SAAC ≥ 40%｜风险表现 7.1%"]
+        S2["结构性约束<br/>获客贵｜转化链路长｜Responsible Lending 监管严"]
+        S3["统一经营命题<br/>在风险与合规约束下，提升客户全生命周期收益"]
+        S1 --> S3
+        S2 --> S3
+    end
+
+    subgraph L2["② 数据与基础设施层｜统一数据底座"]
+        direction LR
+        D1["银行流水数据源<br/>illion｜Open Banking｜后续多供应商"]
+        D2["流水处理链路<br/>IDA → SQS → IDP → 结果落库"]
+        D3["BS-CAT 交易理解｜◐ 集成中<br/>9 引擎｜35 类别｜交易对手｜收入/负债流"]
+        D4["S-CALC 偿付能力｜◐ 开发中<br/>收入－必要支出－负债还款＝可支配盈余"]
+        D5["客户与信贷数据<br/>申请｜授信｜放款｜还款｜风险表现"]
+        D6["行为与市场数据<br/>APP｜Campaign｜SMS/Email/Push｜渠道/素材/成本"]
+        D1 --> D2 --> D3 --> D4
+    end
+
+    subgraph L3["③ 模型与客户智能层｜回答三个核心问题"]
+        direction LR
+        M1["Risk｜能不能借<br/>● WageGo 新客 PD｜● 老客风险 V2 已验证｜流水子模型"]
+        M2["Value｜值不值得经营<br/>● 新客价值模型 1.0 已验证｜◐ LTV 模型建设"]
+        M3["Intent｜当前想不想借<br/>● 复贷响应模型已验证｜◐ Borrow/Repay Intent 建设"]
+        M4["Operating｜现在是否值得运营<br/>○ Fundo Score 规划｜客户画像"]
+    end
+
+    subgraph L4["④ 统一决策引擎｜Risk × Value × Intent"]
+        direction LR
+        J0["统一客户分层<br/>统一标签｜定期刷新｜人群包/接口"]
+        J1["风险决策<br/>准入｜审批｜额度｜人工复核"]
+        J2["定价与产品决策<br/>Risk-Based Pricing｜Pricing Matrix｜产品匹配"]
+        J3["投放与市场决策<br/>人群｜渠道｜出价｜素材｜回传"]
+        J4["运营决策<br/>触达时机｜频率｜权益｜复贷/Cross-sell"]
+        J0 --> J1
+        J0 --> J2
+        J0 --> J3
+        J0 --> J4
+    end
+
+    subgraph L5["⑤ 业务应用与 2026H2 重点项目"]
+        direction LR
+        A1["风险 / 信审｜◐ H2 重点项目<br/>新客 PD 迭代｜BS-CAT 并行验证<br/>S-CALC / LMS 改造｜SAV 人审闭环"]
+        A2["投放 / 市场｜◐ H2 重点项目<br/>分层人群包与 Lookalike｜Tracking / MMP / MTA / CAPI<br/>买量线与边际 CPS｜新渠道 / RTA 评估"]
+        A3["运营 / 产品｜◐ H2 重点项目<br/>Campaign 与 APP｜复贷 / Cross-sell<br/>差异化额度与定价｜Contact Policy"]
+    end
+
+    subgraph L6["⑥ 实验评估、运维治理与持续迭代"]
+        direction LR
+        E1["业务效果<br/>规模｜风险｜NON SAAC｜转化｜ROI｜LTV"]
+        E2["增量实验<br/>A/B Test｜Holdout｜Geo-lift｜额度试点"]
+        E3["模型与链路监控<br/>AUC / KS｜校准 / 漂移｜准确率 / 召回率<br/>成功率 / 时延｜切量门槛 / 回退"]
+        E4["AI Agent + 知识库｜◐ 试点<br/>质检 Agent｜知识库 Agent｜Campaign / AB Agent<br/>监控 → 定位 → 修复 → 沉淀"]
+        E5["跨团队协同机制<br/>模型团队枢纽｜风险 / 投放 / 市场 / 运营 / 产品 / 技术<br/>需求对齐 → 联合开发 → 上线验证 → 效果复盘"]
+    end
+
+    S3 --> D1
+    S3 --> D5
+    S3 --> D6
+
+    D3 --> M1
+    D3 --> M2
+    D4 --> M1
+    D4 --> M2
+    D5 --> M1
+    D5 --> M2
+    D5 --> M3
+    D5 --> M4
+    D6 --> M2
+    D6 --> M3
+    D6 --> M4
+
+    M1 --> J0
+    M2 --> J0
+    M3 --> J0
+    M4 --> J0
+
+    J1 --> A1
+    J2 --> A3
+    J3 --> A2
+    J4 --> A3
+
+    A1 --> E1
+    A2 --> E1
+    A3 --> E1
+    E2 --> E1
+    A1 --> E3
+    A2 --> E2
+    A3 --> E2
+
+    E1 -.->|结果回传| D5
+    E1 -.->|渠道与运营回传| D6
+    E2 -.->|验证增量价值| J0
+    E3 -.->|校准 / 迭代| M1
+    E3 -.->|校准 / 迭代| M2
+    E3 -.->|校准 / 迭代| M3
+    E4 -.->|规则与知识更新| D3
+    E4 -.->|自动监控与诊断| E3
+    E5 -.->|项目治理| D2
+    E5 -.->|项目治理| J0
+    E5 -.->|项目治理| E2
+
+    classDef strategy fill:#FFF4D6,stroke:#C58A00,color:#1F2937,stroke-width:1px;
+    classDef foundation fill:#EAF3FF,stroke:#477DB3,color:#1F2937,stroke-width:1px;
+    classDef model fill:#F1ECFF,stroke:#7557B7,color:#1F2937,stroke-width:1px;
+    classDef decision fill:#E7F7EF,stroke:#3D8B68,color:#1F2937,stroke-width:1px;
+    classDef business fill:#FFF0F0,stroke:#B75D69,color:#1F2937,stroke-width:1px;
+    classDef loop fill:#F2F4F7,stroke:#667085,color:#1F2937,stroke-width:1px;
+
+    class S1,S2,S3 strategy;
+    class D1,D2,D3,D4,D5,D6 foundation;
+    class M1,M2,M3,M4 model;
+    class J0,J1,J2,J3,J4 decision;
+    class A1,A2,A3 business;
+    class E1,E2,E3,E4,E5 loop;
 ```
+
+**读图方式**：自上而下是“目标 → 数据 → 模型 → 决策 → 应用 → 评估”的主链路；虚线是“业务结果、实验、监控和知识”向前回流的迭代闭环。状态标记统一为：● 已上线 / 已完成验证，◐ 建设或集成中，○ 规划。
 
 ---
 
