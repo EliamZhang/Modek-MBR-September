@@ -1850,6 +1850,19 @@ AI 完成 PPT 后必须保证：
 - `a:br` 元素必须 `br.append(deepcopy(值 run 的 a:rPr))`，否则 PowerPoint 按 18pt 默认字号渲染换行、行高异常
 - 新增行用深拷贝现有「两段式」模板（灰值复制 用户-m1-2、金值复制 用户-m3-1），格式自动继承，只改 cNvPr id/name、xfrm off、a:t 文本
 
+## 34.20 PowerPoint COM 不可用时的渲染预览法（2026-08）
+
+**现象**：本机 PowerPoint 的 COM 接口整体不可用——`Presentations.Open` / `Slides(1).Export` 均报 `-2147467259`（RPC 层，底层 `0x80010108 RPC_E_DISCONNECTED`），**连旧的备份文件也打不开**。此时无法用 COM 读结构化属性，也无法导出 PNG 人眼校验。
+
+**判断**：COM 对任意 .pptx（含已知完好的备份）都 Open 失败 → 是 Office 自动化环境问题、不是文件损坏；用 python-pptx 能正常读写，本身即文件有效性证据。
+
+**替代验证（已验证可行）**：`skills/ppt-design/render_pptx_preview.py`
+
+- 原理：python-pptx 读每个形状的真实坐标（left/top/width/height，EMU→in）、每个 run 的真实颜色（`str(RGBColor)` 是 16 进制串，按 2 位切），按全角=pt/72、半角≈0.52×pt/72 的字宽估测折行，PIL 按坐标重绘 + 写文字。
+- 用法：`python render_pptx_preview.py <pptx> <out.png> [页序号] [宽px]`，默认第 1 页、宽 2400。
+- 用途界限：**近似预览**——位置/颜色/字号来自真实数据，渲染与 PowerPoint 有字体差异；用来判断布局、是否溢出、疏密是否均匀、文字是否折行，**不做像素级校验**。精确校验仍需 COM 读结构化属性或人工打开。
+- 不足：PIL 用 `msyh.ttc` 渲染中文，与 PowerPoint 内部抗锯齿/字距有差异；表格内多 run 混合格式只看首 run 颜色；无法反映 SmartArt/图表真实渲染。
+
 **检查方法**：COM 逐 run 读 Font.Size/Color 区分灰（#606060 非粗）/金（#D6A000 粗）；`Lines().Count` 查意外折行；两两重叠检测只看新增形状（相邻列的「框边界重叠但文字不重叠」是合法现象，勿误报）。
 
 

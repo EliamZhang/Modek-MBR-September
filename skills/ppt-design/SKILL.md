@@ -26,6 +26,8 @@ description: 使用本仓库的 00-PPT排版规范.md 制作、优化 PPT 汇报
 - 第 37 节：双栏视觉平衡指南
 - 第 34 节：PPTX 编辑实战经验（踩坑记录，避免重蹈覆辙）
 
+> **渲染预览**：PowerPoint COM 不可用时，用 `skills/ppt-design/render_pptx_preview.py` 渲染近似预览（用法见 6.4、原理见规范 34.20）。
+
 ### 2. 按规范执行
 
 - 每个修改步骤完成后，向用户简要说明「做了什么、为什么」
@@ -140,6 +142,8 @@ description: 使用本仓库的 00-PPT排版规范.md 制作、优化 PPT 汇报
 
 ## 6.4 验证方式
 
+- 2026-08：**渲染预览用 `skills/ppt-design/render_pptx_preview.py`**——PowerPoint COM 不可用时,用 python-pptx 读真实坐标 + run 颜色 + 字宽估测折行,用 PIL 重绘成 PNG。用法:`python render_pptx_preview.py <pptx> <out.png> [页序号] [宽px]`,默认第 1 页、宽 2400。**是近似预览**(位置/颜色/字号真实,渲染有差异),用于判断布局、是否溢出、疏密均匀与否,不做像素级校验;精确校验仍需 COM 读结构化属性或人工打开。
+- 2026-08：**PowerPoint COM 可能整体不可用**(Open/Export 报 `0x80010108 RPC_E_DISCONNECTED` 或 `-2147467259`),连备份文件都打不开——这是本机 Office 自动化环境问题、不是文件损坏。判断方法:COM 打开了就正常,失败即回退到 `render_pptx_preview.py`;python-pptx 能正常读写本身就是文件有效性的证据。
 - 2026-08：**用户要求「新建副本页」时用 XML 深拷贝**（add_slide + copy.deepcopy spTree 子元素），比重建形状快且不丢格式；新页形状名加后缀（-c）便于单独编辑（详见规范 34.11）。
 - 2026-08：**圆角矩形用 `MSO_SHAPE.ROUNDED_RECTANGLE` 原生接口**，不要手写 prstGeom（spPr 查找会失败，34.12）。
 - 2026-08：**画像类布局先问清假数据策略再动手**——「违约次数」等主文件没有的数值，用户确认「做假数据」后填入自洽值（0 次）并在汇报中标注；不编造原则优先，但用户明确授权后可填入并说明。
