@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """对新增 6 页做结构化布局验证:折行估算、文本溢出、边界、重叠。"""
+import sys
 from pptx import Presentation
 
-PPTX = r"c:\Users\zhangyuliang02\Desktop\临时文件\9月MBR\Model MBR August.pptx"
+PPTX = (sys.argv[1] if len(sys.argv) > 1
+        else r"c:\Users\zhangyuliang02\Desktop\临时文件\9月MBR\月会PPT.pptx")
 
 
 def cw(ch, pt):
