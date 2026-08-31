@@ -1866,6 +1866,31 @@ AI 完成 PPT 后必须保证：
 **检查方法**：COM 逐 run 读 Font.Size/Color 区分灰（#606060 非粗）/金（#D6A000 粗）；`Lines().Count` 查意外折行；两两重叠检测只看新增形状（相邻列的「框边界重叠但文字不重叠」是合法现象，勿误报）。
 
 
+## 34.21 更换现有页面的版式（slide）方法（2026-08）
+
+**现象**：用户要求把某一页「换成另一页的版式」（母版/版式）。python-pptx 的 `slide.slide_layout` 是只读属性，直接赋值报 `property 'slide_layout' of 'Slide' object has no setter`。
+
+**根因**：slide 与版式的引用在 OPC relationship 层，不在 slide XML 的可见属性里。部分文件（如本仓库 MBR）的 slide XML **没有 `<p:sldLayoutId>` 元素**，版式完全由 `part.rels` 中类型为 `slideLayout` 的关系指向决定。判断方法：打印 `slide.part.rels` 里 `reltype.endswith('/slideLayout')` 的关系所指向的 `partname`（如 `/ppt/slideLayouts/slideLayout1.xml`），再对照 `p.slide_layouts` 的各自 `slide_layout.part.partname` 找到目标版式。
+
+**修复/原则**：换版式用关系操作——
+
+```
+from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+slide.part.drop_rel('rId1')
+rid = slide.part.relate_to(target_layout.part, RT.SLIDE_LAYOUT)
+```
+
+改的是目标版式引用；slide 上的形状（文本框/形状/表格）本就是独立的，不受影响。因此换版式**不损内容**，只改变该页继承的版式视觉元素（背景、装饰条、占位符、logo 等）。
+
+**检查方法**：
+- 换后读回 `slide.slide_layout.name` 应为目标版式名，`slide.slide_layout.part.partname` 应为目标 XML。
+- 记录该页形状名清单，换前后比对确认 shape 数量与名称一致（内容未丢）。
+- 目标版式带占位符时 `relate_to` 不会自动补齐；本仓库各版式 placeholders 为空，无克隆干扰。
+
+**注意（联动 34.5）**：改**版式内容**会影响所有用该版式的页；本次只是把某页**引用到**既有版式、不修改版式本身，因此不影响其他页——「给某页换版式引用」和「修改版式内容」是两回事，别混淆。
+
+---
+
 # 35. 步骤卡片组件（浅灰卡片）
 
 ## 35.0 白色描边卡（白卡 + 浅灰描边）
