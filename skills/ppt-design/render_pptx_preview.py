@@ -131,6 +131,50 @@ def main():
 
     # 再画含文本的卡(底色 + 折行文字)
     for sh in s.shapes:
+        # 表格(graphicFrame)单独绘制:网格 + 单元格文字
+        if sh.has_table:
+            tbl = sh.table
+            l, t = sh.left / 914400, sh.top / 914400
+            w, h = sh.width / 914400, sh.height / 914400
+            d.rectangle([P(l), P(t), P(l + w), P(t + h)], fill=(255, 255, 255),
+                        outline=(10, 10, 10), width=2)
+            nrows = len(tbl.rows)
+            ncols = len(tbl.columns)
+            row_tops = []
+            acc = t
+            for ri in range(nrows):
+                row_tops.append(acc)
+                acc += tbl.rows[ri].height / 914400
+            col_lefts = []
+            acc = l
+            for ci in range(ncols):
+                col_lefts.append(acc)
+                acc += tbl.columns[ci].width / 914400
+            for ri in range(nrows):
+                y0 = row_tops[ri]
+                y1 = row_tops[ri + 1] if ri + 1 < nrows else t + h
+                for ci in range(ncols):
+                    x0 = col_lefts[ci]
+                    x1 = col_lefts[ci + 1] if ci + 1 < ncols else l + w
+                    cell = tbl.cell(ri, ci)
+                    try:
+                        cfill = cell.fill.fore_color.rgb
+                        cell_bg = tuple(int(str(cfill)[i:i + 2], 16) for i in (0, 2, 4)) if cfill else None
+                    except Exception:
+                        cell_bg = None
+                    if cell_bg and cell_bg != (255, 255, 255):
+                        d.rectangle([P(x0), P(y0), P(x1), P(y1)], fill=cell_bg)
+                    txt = cell.text_frame.text
+                    if txt.strip():
+                        d.text((P(x0 + 0.04), P(y0 + 0.01)), txt.replace('\n', ' ')[:12],
+                               font=get_font(7.5, DEFAULT_FONT), fill=(61, 60, 58))
+                    # 行分隔线
+                    if ci == ncols - 1:
+                        d.line([(P(l), P(y1)), (P(l + w), P(y1))],
+                               fill=(10, 10, 10) if ri == 0 else (214, 214, 214),
+                               width=3 if ri == 0 else 1)
+                # 列分隔线仅表头以下细灰线
+            continue
         if not (sh.has_text_frame and sh.text_frame.text.strip()):
             continue
         fill, line = shape_style(sh)
